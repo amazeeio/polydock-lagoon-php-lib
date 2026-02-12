@@ -1,19 +1,20 @@
-<?php namespace FreedomtechHosting\FtLagoonPhp\ClientTraits;
+<?php
+
+namespace FreedomtechHosting\FtLagoonPhp\ClientTraits;
 
 use FreedomtechHosting\FtLagoonPhp\LagoonClientInitializeRequiredToInteractException;
 
-Trait GroupTrait {
-
+trait GroupTrait
+{
     /**
      * Get all groups
      *
-     * @return array
      * @throws LagoonClientInitializeRequiredToInteractException if client not initialized
      */
-    public function getAllGroups() : array
+    public function getAllGroups(): array
     {
-        if(empty($this->lagoonToken) || empty($this->graphqlClient)) {
-            throw new LagoonClientInitializeRequiredToInteractException();
+        if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
+            throw new LagoonClientInitializeRequiredToInteractException;
         }
 
         $query = <<<GQL
@@ -23,24 +24,25 @@ Trait GroupTrait {
                     name
                     type
                     organization
-                }   
+                }
             }
         GQL;
 
         $response = $this->graphqlClient->query($query);
 
-        if($response->hasErrors()) {
+        if ($response->hasErrors()) {
             return ['error' => $response->getErrors()];
         }
 
         $data = $response->getData();
+
         return $data['allGroups'];
     }
-    
-    public function addGroupToProject(string $groupName, string $projectName) : array
+
+    public function addGroupToProject(string $groupName, string $projectName): array
     {
-        if(empty($this->lagoonToken) || empty($this->graphqlClient)) {
-            throw new LagoonClientInitializeRequiredToInteractException();
+        if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
+            throw new LagoonClientInitializeRequiredToInteractException;
         }
 
         $mutation = <<<GQL
@@ -62,14 +64,14 @@ Trait GroupTrait {
 
         $response = $this->graphqlClient->query($mutation);
 
-        if($response->hasErrors()) {
+        if ($response->hasErrors()) {
             return ['error' => $response->getErrors()];
-        }
-        else {
+        } else {
             // Returns an array with all the data returned by the GraphQL server.
             $data = $response->getData();
+
             return $data;
         }
-        
+
     }
 }

@@ -1,23 +1,26 @@
-<?php namespace FreedomtechHosting\FtLagoonPhp\ClientTraits;
+<?php
 
-use FreedomtechHosting\FtLagoonPhp\Ssh;
+namespace FreedomtechHosting\FtLagoonPhp\ClientTraits;
+
 use FreedomtechHosting\FtLagoonPhp\LagoonClientInitializeRequiredToInteractException;
+use FreedomtechHosting\FtLagoonPhp\Ssh;
 
 /**
  * Trait AuthTrait
- * 
+ *
  * Provides authentication and API interaction methods for the Lagoon API client.
  */
-Trait AuthTrait {
+trait AuthTrait
+{
     public function getLagoonTokenOverSSH($refresh = false, $debug = false)
     {
-        if($this->lagoonToken && !$refresh) {
+        if ($this->lagoonToken && ! $refresh) {
             return $this->lagoonToken;
         }
 
         $ssh = Ssh::createLagoonConfigured($this->lagoonSshUser, $this->lagoonSshServer, $this->lagoonSshPort, $this->sshPrivateKeyFile);
 
-        if($debug) {
+        if ($debug) {
             echo $ssh->getTokenCommand();
         }
 
@@ -26,36 +29,36 @@ Trait AuthTrait {
 
         return $token;
     }
-    
+
     /**
      * Pings the Lagoon API to verify connectivity and authentication
      *
-     * @throws LagoonClientInitializeRequiredToInteractException If client is not properly initialized
      * @return bool True if connection is successful, false otherwise
+     *
+     * @throws LagoonClientInitializeRequiredToInteractException If client is not properly initialized
      */
-    public function pingLagoonAPI() : bool
+    public function pingLagoonAPI(): bool
     {
-        if(empty($this->lagoonToken) || empty($this->graphqlClient)) {
-            throw new LagoonClientInitializeRequiredToInteractException();
+        if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
+            throw new LagoonClientInitializeRequiredToInteractException;
         }
 
         /**
          * Query Example
          */
-        $query = "
+        $query = '
           query q {
             lagoonVersion
             me {
               id
             }
-          }";
+          }';
 
         $response = $this->graphqlClient->query($query);
 
-        if($response->hasErrors()) {
+        if ($response->hasErrors()) {
             return false;
-        }
-        else {
+        } else {
             // Returns an array with all the data returned by the GraphQL server.
             $data = $response->getData();
 
@@ -68,35 +71,36 @@ Trait AuthTrait {
     /**
      * Retrieves information about the currently authenticated user
      *
-     * @throws LagoonClientInitializeRequiredToInteractException If client is not properly initialized
      * @return array User information including ID and email
+     *
+     * @throws LagoonClientInitializeRequiredToInteractException If client is not properly initialized
      */
-    public function whoAmI() : array
+    public function whoAmI(): array
     {
-        if(empty($this->lagoonToken) || empty($this->graphqlClient)) {
-            throw new LagoonClientInitializeRequiredToInteractException();
+        if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
+            throw new LagoonClientInitializeRequiredToInteractException;
         }
 
         /**
          * Query Example
          */
-        $query = "
+        $query = '
           query q {
             lagoonVersion
             me {
 	      id,
 	      email
             }
-          }";
+          }';
 
         $response = $this->graphqlClient->query($query);
 
-        if($response->hasErrors()) {
+        if ($response->hasErrors()) {
             return false;
-        }
-        else {
+        } else {
             // Returns an array with all the data returned by the GraphQL server.
             $data = $response->getData();
+
             return $data;
         }
     }

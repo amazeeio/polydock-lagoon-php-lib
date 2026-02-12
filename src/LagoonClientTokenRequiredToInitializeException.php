@@ -1,4 +1,6 @@
-<?php namespace FreedomtechHosting\FtLagoonPhp;
+<?php
+
+namespace FreedomtechHosting\FtLagoonPhp;
 
 use Exception;
 
