@@ -14,7 +14,7 @@ trait ProjectEnvironmentTrait
      * @param  string  $environmentName  The name of the environment
      * @return bool True if environment exists, false otherwise
      */
-    public function projectEnvironmentExistsByName(string $projectName, $environmentName): bool
+    public function projectEnvironmentExistsByName(string $projectName, string $environmentName): bool
     {
         $data = $this->getProjectEnvironmentsByName($projectName);
 
@@ -40,14 +40,16 @@ trait ProjectEnvironmentTrait
      *
      * @param  string  $projectName  The name of the project
      * @return array Associative array of environments keyed by name
+     *
+     * @throws LagoonClientInitializeRequiredToInteractException
      */
     public function getProjectEnvironmentsByName(string $projectName): array
     {
         $data = $this->getProjectByName($projectName);
-        $environment = $data['projectByName']['environments'];
+        $environments = $data['projectByName']['environments'];
         $retenvs = [];
 
-        foreach ($environment as $environment) {
+        foreach ($environments as $environment) {
             $retenvs[$environment['name']] = $environment;
         }
 
@@ -66,7 +68,7 @@ trait ProjectEnvironmentTrait
     public function deployProjectEnvironmentByName(
         string $projectName,
         string $deployBranch,
-    ) {
+    ): array {
         if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
             throw new LagoonClientInitializeRequiredToInteractException;
         }
@@ -135,11 +137,8 @@ trait ProjectEnvironmentTrait
         } else {
             // Returns an array with all the data returned by the GraphQL server.
             $data = $response->getData();
-            if (isset($data['environmentByName']['deployments'][0])) {
-                return $data['environmentByName']['deployments'][0];
-            }
 
-            return ['error' => 'Deployment not found: '.$deploymentName, 'errorData' => $data];
+            return $data['environmentByName']['deployments'][0] ?? ['error' => 'Deployment not found: '.$deploymentName, 'errorData' => $data];
         }
     }
 
@@ -147,7 +146,7 @@ trait ProjectEnvironmentTrait
      * Gets deployments for a project environment
      *
      * @param  string  $projectName  The name of the project
-     * @param  string  $environmentName  The name of the environment
+     * @param  string|null  $environmentName  The name of the environment
      * @return array Deployment information or error details
      *
      * @throws LagoonClientInitializeRequiredToInteractException if client not initialized
@@ -221,7 +220,7 @@ trait ProjectEnvironmentTrait
             }
         }
 
-        if (isset($environmentName) && ! empty($environmentName)) {
+        if (! empty($environmentName)) {
             return isset($deployments[$environmentName]) ? [$environmentName => $deployments[$environmentName]] : [];
         }
 
@@ -240,7 +239,7 @@ trait ProjectEnvironmentTrait
     public function deleteProjectEnvironmentByName(
         string $projectName,
         string $environmentName,
-    ) {
+    ): array {
         if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
             throw new LagoonClientInitializeRequiredToInteractException;
         }
@@ -278,7 +277,6 @@ trait ProjectEnvironmentTrait
      * @return array Response from the API
      *
      * @throws LagoonClientInitializeRequiredToInteractException if client not initialized
-     * @throws LagoonVariableScopeInvalidException if scope is invalid
      */
     public function addOrUpdateScopedVariableForProjectEnvironment(
         string $projectName,
@@ -286,7 +284,7 @@ trait ProjectEnvironmentTrait
         string $key,
         string $value,
         string $scope
-    ) {
+    ): array {
         return $this->addOrUpdateScopedVariableForProject(
             $projectName,
             $key,
@@ -302,6 +300,8 @@ trait ProjectEnvironmentTrait
      * @param  string  $projectName  The name of the project
      * @param  string  $environmentName  The name of the environment
      * @return array Associative array of variables with their values and scopes
+     *
+     * @throws LagoonClientInitializeRequiredToInteractException
      */
     public function getProjectVariablesByNameForEnvironment(string $projectName, string $environmentName): array
     {
@@ -332,6 +332,8 @@ trait ProjectEnvironmentTrait
      * @param  string  $environmentName  The name of the environment
      * @param  string  $variableName  The name of the variable to retrieve
      * @return array Variable data including value and scope, or empty array if not found
+     *
+     * @throws LagoonClientInitializeRequiredToInteractException
      */
     public function getProjectVariableByNameForEnvironment(string $projectName, string $environmentName, string $variableName): array
     {

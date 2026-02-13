@@ -36,9 +36,7 @@ class Ssh extends SpatieSsh
         $extraOptions = implode(' ', $this->getExtraOptions());
         $target = $this->getTargetForSsh();
 
-        $sshCommand = "ssh {$extraOptions} {$target} token";
-
-        return $sshCommand;
+        return "ssh {$extraOptions} {$target} token";
     }
 
     public function getCommandForExecute(string $execute, string $serviceName = 'cli', string $containerName = 'cli'): string
@@ -46,9 +44,7 @@ class Ssh extends SpatieSsh
         $extraOptions = implode(' ', $this->getExtraOptions());
         $target = $this->getTargetForSsh();
 
-        $sshCommand = "ssh {$extraOptions} {$target} service={$serviceName} container={$containerName} $execute";
-
-        return $sshCommand;
+        return "ssh {$extraOptions} {$target} service={$serviceName} container={$containerName} $execute";
     }
 
     public function executeSShCommand(string $command, string $serviceName = 'cli', string $containerName = 'cli'): array
@@ -85,6 +81,8 @@ class Ssh extends SpatieSsh
      * @param  string  $port  The SSH port number to use
      * @param  string  $privateKeyFile  Path to the private key file for authentication
      * @return static Returns configured SSH connection instance
+     *
+     * @throws \Exception
      */
     public static function createLagoonConfigured(string $user, string $server, string $port, string $privateKeyFile): static
     {

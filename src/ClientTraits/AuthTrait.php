@@ -64,8 +64,6 @@ trait AuthTrait
 
             return isset($data['lagoonVersion']) && isset($data['me']['id']);
         }
-
-        return true;
     }
 
     /**
@@ -96,12 +94,10 @@ trait AuthTrait
         $response = $this->graphqlClient->query($query);
 
         if ($response->hasErrors()) {
-            return false;
+            return ['error' => $response->getErrors()];
         } else {
             // Returns an array with all the data returned by the GraphQL server.
-            $data = $response->getData();
-
-            return $data;
+            return $response->getData();
         }
     }
 }

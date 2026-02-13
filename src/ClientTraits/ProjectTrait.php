@@ -17,6 +17,8 @@ trait ProjectTrait
      * @param  int  $clusterId  The Kubernetes cluster ID
      * @param  string|null  $privateKey  The private key for Git access
      * @return array Response from the API
+     *
+     * @throws LagoonClientInitializeRequiredToInteractException
      */
     public function createLagoonProject(
         string $projectName,
@@ -24,7 +26,7 @@ trait ProjectTrait
         string $branches,
         string $productionEnvironment,
         int $clusterId,
-        ?string $privateKey = null)
+        ?string $privateKey = null): array
     {
 
         $projectInput = [
@@ -46,10 +48,12 @@ trait ProjectTrait
      * @param  string  $branches  The branches to deploy
      * @param  string  $productionEnvironment  The production environment
      * @param  int  $clusterId  The Kubernetes cluster ID
-     * @param  string|null  $privateKey  The private key for Git access
+     * @param  string  $privateKey  The private key for Git access
      * @param  int  $orgId  The organization ID
      * @param  bool  $addOrgOwnerToProject  Whether to add organization owner to project
      * @return array Response from the API
+     *
+     * @throws LagoonClientInitializeRequiredToInteractException
      */
     public function createLagoonProjectInOrganization(
         string $projectName,
@@ -59,7 +63,7 @@ trait ProjectTrait
         int $clusterId,
         string $privateKey,
         int $orgId,
-        bool $addOrgOwnerToProject)
+        bool $addOrgOwnerToProject): array
     {
 
         $projectInput = [
@@ -87,7 +91,7 @@ trait ProjectTrait
      *
      * @throws LagoonClientInitializeRequiredToInteractException if client not initialized
      */
-    protected function addProjectMutation(array $addProjectInput)
+    protected function addProjectMutation(array $addProjectInput): array
     {
 
         if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
@@ -116,9 +120,7 @@ trait ProjectTrait
             return ['error' => $response->getErrors()];
         } else {
             // Returns an array with all the data returned by the GraphQL server.
-            $data = $response->getData();
-
-            return $data;
+            return $response->getData();
         }
     }
 
@@ -127,6 +129,8 @@ trait ProjectTrait
      *
      * @param  string  $projectName  The name of the project to check
      * @return bool True if project exists, false otherwise
+     *
+     * @throws LagoonClientInitializeRequiredToInteractException
      */
     public function projectExistsByName(string $projectName): bool
     {
@@ -203,12 +207,8 @@ trait ProjectTrait
             return ['error' => $response->getErrors()];
         } else {
             // Returns an array with all the data returned by the GraphQL server.
-            $data = $response->getData();
-
-            return $data;
+            return $response->getData();
         }
-
-        return true;
     }
 
     /**
@@ -216,6 +216,8 @@ trait ProjectTrait
      *
      * @param  string  $projectName  The name of the project
      * @return array Associative array of variables with their values and scopes
+     *
+     * @throws LagoonClientInitializeRequiredToInteractException
      */
     public function getProjectVariablesByName(string $projectName): array
     {
@@ -239,6 +241,8 @@ trait ProjectTrait
      * @param  string  $projectName  The name of the project
      * @param  string  $variableName  The name of the variable to retrieve
      * @return array Variable data including value and scope, or empty array if not found
+     *
+     * @throws LagoonClientInitializeRequiredToInteractException
      */
     public function getProjectVariableByName(string $projectName, string $variableName): array
     {
@@ -257,8 +261,7 @@ trait ProjectTrait
      * @param  string|null  $environment  Optional environment name
      * @return array Response from the API
      *
-     * @throws LagoonClientInitializeRequiredToInteractException if client not initialized
-     * @throws LagoonVariableScopeInvalid if scope is invalid
+     * @throws LagoonClientInitializeRequiredToInteractException|LagoonVariableScopeInvalidException if client not initialized
      */
     public function addOrUpdateScopedVariableForProject(
         string $projectName,
@@ -266,7 +269,7 @@ trait ProjectTrait
         string $value,
         string $scope,
         ?string $environment = null
-    ) {
+    ): array {
         if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
             throw new LagoonClientInitializeRequiredToInteractException;
         }
@@ -301,9 +304,7 @@ trait ProjectTrait
             return ['error' => $response->getErrors()];
         } else {
             // Returns an array with all the data returned by the GraphQL server.
-            $data = $response->getData();
-
-            return $data;
+            return $response->getData();
         }
     }
 
@@ -315,7 +316,7 @@ trait ProjectTrait
      * @param  string  $value  The variable value
      * @return array Response from the API
      *
-     * @throws LagoonClientInitializeRequiredToInteractException if client not initialized
+     * @throws LagoonClientInitializeRequiredToInteractException|LagoonVariableScopeInvalidException if client not initialized
      */
     public function addOrUpdateGlobalVariableForProject(
         string $projectName,
@@ -338,7 +339,7 @@ trait ProjectTrait
             throw new LagoonClientInitializeRequiredToInteractException;
         }
 
-        $query = <<<GQL
+        $query = <<<'GQL'
             query q {
                 allProjects {
                     id
@@ -373,9 +374,7 @@ trait ProjectTrait
         if ($response->hasErrors()) {
             return ['error' => $response->getErrors()];
         } else {
-            $data = $response->getData();
-
-            return $data;
+            return $response->getData();
         }
     }
 
@@ -393,18 +392,9 @@ trait ProjectTrait
         string $projectName,
         string $variableName,
         ?string $environment = null
-    ) {
+    ): array {
         if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
             throw new LagoonClientInitializeRequiredToInteractException;
-        }
-
-        $input = [
-            'project' => $projectName,
-            'name' => $variableName,
-        ];
-
-        if (! empty($environment)) {
-            $input['environment'] = $environment;
         }
 
         $environmentArg = ! empty($environment) ? "environment: \"{$environment}\"," : '';
@@ -425,9 +415,7 @@ trait ProjectTrait
             return ['error' => $response->getErrors()];
         } else {
             // Returns an array with all the data returned by the GraphQL server.
-            $data = $response->getData();
-
-            return $data;
+            return $response->getData();
         }
     }
 
@@ -435,14 +423,13 @@ trait ProjectTrait
      * Deletes a project environment
      *
      * @param  string  $projectName  The name of the project
-     * @param  string  $environmentName  The name of the environment to delete
      * @return array Response from the API
      *
      * @throws LagoonClientInitializeRequiredToInteractException if client not initialized
      */
     public function deleteProjectByName(
         string $projectName,
-    ) {
+    ): array {
         if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
             throw new LagoonClientInitializeRequiredToInteractException;
         }
@@ -461,12 +448,14 @@ trait ProjectTrait
             return ['error' => $response->getErrors()];
         } else {
             // Returns an array with all the data returned by the GraphQL server.
-            $data = $response->getData();
-
-            return $data;
+            return $response->getData();
         }
     }
 
+    /**
+     * @throws LagoonClientInitializeRequiredToInteractException
+     * @throws \Exception
+     */
     public function addProjectDeployTargetByProjectId(int $projectId, int $deployTargetId, int $weight,
         ?string $branches = null, ?string $pullrequests = null): array
     {
@@ -519,12 +508,13 @@ trait ProjectTrait
         if ($response->hasErrors()) {
             return ['error' => $response->getErrors()];
         } else {
-            $data = $response->getData();
-
-            return $data;
+            return $response->getData();
         }
     }
 
+    /**
+     * @throws LagoonClientInitializeRequiredToInteractException
+     */
     public function getProjectDeployTargetsByProjectId(int $projectId): array
     {
         if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
@@ -558,12 +548,13 @@ trait ProjectTrait
         if ($response->hasErrors()) {
             return ['error' => $response->getErrors()];
         } else {
-            $data = $response->getData();
-
-            return $data;
+            return $response->getData();
         }
     }
 
+    /**
+     * @throws LagoonClientInitializeRequiredToInteractException
+     */
     public function getProjectDeployTargetByConfigId(int $deployTargetConfigId): array
     {
         if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
@@ -597,12 +588,14 @@ trait ProjectTrait
         if ($response->hasErrors()) {
             return ['error' => $response->getErrors()];
         } else {
-            $data = $response->getData();
-
-            return $data;
+            return $response->getData();
         }
     }
 
+    /**
+     * @throws LagoonClientInitializeRequiredToInteractException
+     * @throws \Exception
+     */
     public function updateProjectDeployTargetByConfigId(int $deployTargetConfigId, int $deployTargetId, ?int $weight = null,
         ?string $branches = null, ?string $pullRequest = null): array
     {
@@ -661,12 +654,13 @@ trait ProjectTrait
         if ($response->hasErrors()) {
             return ['error' => $response->getErrors()];
         } else {
-            $data = $response->getData();
-
-            return $data;
+            return $response->getData();
         }
     }
 
+    /**
+     * @throws LagoonClientInitializeRequiredToInteractException
+     */
     public function deleteProjectDeployTargetByConfigId(int $deployTargetConfigId, int $projectId): array
     {
         if (empty($this->lagoonToken) || empty($this->graphqlClient)) {

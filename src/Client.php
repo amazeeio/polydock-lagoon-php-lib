@@ -21,24 +21,21 @@ use Softonic\GraphQL\ClientBuilder;
  */
 class Client
 {
-    protected $config;
+    protected \Softonic\GraphQL\Client $graphqlClient;
 
-    /** @var \Softonic\GraphQL\Client */
-    protected $graphqlClient;
+    protected string $sshPrivateKeyFile;
 
-    protected $sshPrivateKeyFile;
+    protected string $lagoonSshUser;
 
-    protected $lagoonSshUser;
+    protected string $lagoonSshServer;
 
-    protected $lagoonSshServer;
+    protected string $lagoonSshPort;
 
-    protected $lagoonSshPort;
+    protected ?string $lagoonToken = null;
 
-    protected $lagoonToken;
+    protected string $lagoonApiEndpoint;
 
-    protected $lagoonApiEndpoint;
-
-    protected $debug = false;
+    protected string|bool $debug = false;
 
     use AuthTrait;
     use GroupTrait;
@@ -57,21 +54,21 @@ class Client
      *                         - ssh_port: SSH port (default: '32222')
      *                         - endpoint: API endpoint URL (default: 'https://api.lagoon.amazeeio.cloud/graphql')
      *                         - ssh_private_key_file: Path to SSH private key (default: '~/.ssh/id_rsa')
+     *
+     * @throws LagoonClientPrivateKeyNotFoundException
      */
-    public function __construct(array $config = [])
+    public function __construct(protected array $config = [])
     {
-        $this->config = $config;
+        $this->lagoonSshUser = $this->config['ssh_user'] ?? 'lagoon';
+        $this->lagoonSshServer = $this->config['ssh_server'] ?? 'ssh.lagoon.amazeeio.cloud';
+        $this->lagoonSshPort = $this->config['ssh_port'] ?? '32222';
+        $this->lagoonApiEndpoint = $this->config['endpoint'] ?? 'https://api.lagoon.amazeeio.cloud/graphql';
+        $this->sshPrivateKeyFile = $this->config['ssh_private_key_file'] ?? getenv('HOME').'/.ssh/id_rsa';
 
-        $this->lagoonSshUser = $config['ssh_user'] ?? 'lagoon';
-        $this->lagoonSshServer = $config['ssh_server'] ?? 'ssh.lagoon.amazeeio.cloud';
-        $this->lagoonSshPort = $config['ssh_port'] ?? '32222';
-        $this->lagoonApiEndpoint = $config['endpoint'] ?? 'https://api.lagoon.amazeeio.cloud/graphql';
-        $this->sshPrivateKeyFile = $config['ssh_private_key_file'] ?? getenv('HOME').'/.ssh/id_rsa';
-
-        if (! isset($config['debug'])) {
+        if (! isset($this->config['debug'])) {
             $this->debug = false;
         } else {
-            $this->debug = $config['debug'];
+            $this->debug = $this->config['debug'];
         }
 
         if (! file_exists($this->sshPrivateKeyFile)) {
@@ -84,9 +81,9 @@ class Client
      *
      * @param  bool  $debug  True to enable debug, false to disable
      */
-    public function setDebug($debug)
+    public function setDebug(bool $debug): void
     {
-        $this->debug = (bool) $debug;
+        $this->debug = $debug;
     }
 
     /**
@@ -104,7 +101,7 @@ class Client
      *
      * @throws LagoonClientTokenRequiredToInitializeException if no token is set
      */
-    public function initGraphqlClient()
+    public function initGraphqlClient(): void
     {
         if (empty($this->lagoonToken)) {
             throw new LagoonClientTokenRequiredToInitializeException;
@@ -122,7 +119,7 @@ class Client
      *
      * @param  string  $token  The authentication token
      */
-    public function setLagoonToken($token)
+    public function setLagoonToken(string $token): void
     {
         $this->lagoonToken = $token;
     }
@@ -132,7 +129,7 @@ class Client
      *
      * @return string|null The current token or null if not set
      */
-    public function getLagoonToken()
+    public function getLagoonToken(): ?string
     {
         return $this->lagoonToken;
     }

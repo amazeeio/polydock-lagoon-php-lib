@@ -17,7 +17,7 @@ trait GroupTrait
             throw new LagoonClientInitializeRequiredToInteractException;
         }
 
-        $query = <<<GQL
+        $query = <<<'GQL'
             query q {
                 allGroups {
                     id
@@ -39,6 +39,9 @@ trait GroupTrait
         return $data['allGroups'];
     }
 
+    /**
+     * @throws LagoonClientInitializeRequiredToInteractException
+     */
     public function addGroupToProject(string $groupName, string $projectName): array
     {
         if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
@@ -68,9 +71,7 @@ trait GroupTrait
             return ['error' => $response->getErrors()];
         } else {
             // Returns an array with all the data returned by the GraphQL server.
-            $data = $response->getData();
-
-            return $data;
+            return $response->getData();
         }
 
     }
