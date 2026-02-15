@@ -61,6 +61,7 @@ trait ProjectEnvironmentTrait
      *
      * @param  string  $projectName  The name of the project
      * @param  string  $deployBranch  The branch to deploy
+     * @param  array  $buildVariables  Optional build variables
      * @return array Response from the API
      *
      * @throws LagoonClientInitializeRequiredToInteractException if client not initialized
@@ -68,9 +69,19 @@ trait ProjectEnvironmentTrait
     public function deployProjectEnvironmentByName(
         string $projectName,
         string $deployBranch,
+        array $buildVariables = []
     ): array {
         if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
             throw new LagoonClientInitializeRequiredToInteractException;
+        }
+
+        $buildVarsInput = '';
+        if (! empty($buildVariables)) {
+            $formattedVars = [];
+            foreach ($buildVariables as $key => $value) {
+                $formattedVars[] = "{name: \"{$key}\", value: \"{$value}\"}";
+            }
+            $buildVarsInput = 'buildVariables: ['.implode(', ', $formattedVars).']';
         }
 
         $mutation = <<<GQL
@@ -78,6 +89,7 @@ trait ProjectEnvironmentTrait
                 deployEnvironmentBranch(input: {
                     project: {name: "{$projectName}"}
                     branchName: "{$deployBranch}"
+                    {$buildVarsInput}
                     returnData: true
                 })
             }
