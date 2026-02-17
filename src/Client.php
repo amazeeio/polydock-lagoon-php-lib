@@ -6,6 +6,7 @@ use FreedomtechHosting\FtLagoonPhp\ClientTraits\AuthTrait;
 use FreedomtechHosting\FtLagoonPhp\ClientTraits\GroupTrait;
 use FreedomtechHosting\FtLagoonPhp\ClientTraits\ProjectEnvironmentTrait;
 use FreedomtechHosting\FtLagoonPhp\ClientTraits\ProjectTrait;
+use Softonic\GraphQL\Client as GraphqlClient;
 use Softonic\GraphQL\ClientBuilder;
 
 /**
@@ -21,7 +22,7 @@ use Softonic\GraphQL\ClientBuilder;
  */
 class Client
 {
-    protected \Softonic\GraphQL\Client $graphqlClient;
+    protected GraphqlClient $graphqlClient;
 
     protected string $sshPrivateKeyFile;
 
@@ -48,12 +49,16 @@ class Client
      * Initializes the client with configuration settings for SSH and API connectivity.
      * Uses default values for most settings if not explicitly provided.
      *
-     * @param  array  $config  Configuration array with optional keys:
-     *                         - ssh_user: SSH username (default: 'lagoon')
-     *                         - ssh_server: SSH server hostname (default: 'ssh.lagoon.amazeeio.cloud')
-     *                         - ssh_port: SSH port (default: '32222')
-     *                         - endpoint: API endpoint URL (default: 'https://api.lagoon.amazeeio.cloud/graphql')
-     *                         - ssh_private_key_file: Path to SSH private key (default: '~/.ssh/id_rsa')
+     * @param array $config Configuration array with optional keys:
+     *                      - ssh_user: SSH username (default:
+     *                      'lagoon') - ssh_server: SSH server
+     *                      hostname (default:
+     *                      'ssh.lagoon.amazeeio.cloud') -
+     *                      ssh_port: SSH port (default: '32222') -
+     *                      endpoint: API endpoint URL (default:
+     *                      'https://api.lagoon.amazeeio.cloud/graphql')
+     *                      - ssh_private_key_file: Path to SSH
+     *                      private key (default: '~/.ssh/id_rsa')
      *
      * @throws LagoonClientPrivateKeyNotFoundException
      */
@@ -79,7 +84,7 @@ class Client
     /**
      * Set the debug mode
      *
-     * @param  bool  $debug  True to enable debug, false to disable
+     * @param bool $debug True to enable debug, false to disable
      */
     public function setDebug(bool $debug): void
     {
@@ -107,17 +112,33 @@ class Client
             throw new LagoonClientTokenRequiredToInitializeException;
         }
 
-        $this->graphqlClient = ClientBuilder::build($this->lagoonApiEndpoint, [
+        $this->graphqlClient = ClientBuilder::build(
+            $this->lagoonApiEndpoint, [
             'headers' => [
                 'Authorization' => 'Bearer '.$this->lagoonToken,
             ],
-        ]);
+            ]
+        );
+    }
+
+    /**
+     * Gets the GraphQL client instance.
+     *
+     * @throws LagoonClientTokenRequiredToInitializeException if graphql client is not set
+     */
+    public function getGraphqlClient(): GraphqlClient
+    {
+        if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
+            throw new LagoonClientTokenRequiredToInitializeException();
+        }
+
+        return $this->graphqlClient;
     }
 
     /**
      * Sets the Lagoon authentication token
      *
-     * @param  string  $token  The authentication token
+     * @param string $token The authentication token
      */
     public function setLagoonToken(string $token): void
     {
