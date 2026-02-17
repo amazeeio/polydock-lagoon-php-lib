@@ -98,7 +98,7 @@ trait ProjectTrait
             throw new LagoonClientInitializeRequiredToInteractException;
         }
 
-        $mutation = <<<GQL
+        $mutation = <<<'GQL'
             mutation ($projectInput: AddProjectInput!) {
                 addProject(input: $projectInput) {
                     id
