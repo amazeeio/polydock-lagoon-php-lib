@@ -704,16 +704,16 @@
         },
         {
             "name": "softonic/graphql-client",
-            "version": "3.1.1",
+            "version": "3.1.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/softonic/graphql-client.git",
-                "reference": "72ae042d3f22ad5eb57cd7672954d8f5dc9687ef"
+                "reference": "71efe9e93609a98f7878c7d323732ccfb817653d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/softonic/graphql-client/zipball/72ae042d3f22ad5eb57cd7672954d8f5dc9687ef",
-                "reference": "72ae042d3f22ad5eb57cd7672954d8f5dc9687ef",
+                "url": "https://api.github.com/repos/softonic/graphql-client/zipball/71efe9e93609a98f7878c7d323732ccfb817653d",
+                "reference": "71efe9e93609a98f7878c7d323732ccfb817653d",
                 "shasum": ""
             },
             "require": {
@@ -721,7 +721,7 @@
                 "guzzlehttp/guzzle": "^6.3 || ^7.0",
                 "php": "^8.0",
                 "softonic/guzzle-oauth2-middleware": "^2.1",
-                "symfony/console": "^6.0 || ^7.0"
+                "symfony/console": "^6.0 || ^7.0 || ^8.0"
             },
             "require-dev": {
                 "friendsofphp/php-cs-fixer": "^3.9",
@@ -753,9 +753,9 @@
             ],
             "support": {
                 "issues": "https://github.com/softonic/graphql-client/issues",
-                "source": "https://github.com/softonic/graphql-client/tree/3.1.1"
+                "source": "https://github.com/softonic/graphql-client/tree/3.1.2"
             },
-            "time": "2025-03-26T14:37:06+00:00"
+            "time": "2026-02-18T10:31:17+00:00"
         },
         {
             "name": "softonic/guzzle-oauth2-middleware",
