@@ -16,6 +16,7 @@ trait ProjectTrait
      * @param  string  $productionEnvironment  The production environment
      * @param  int  $clusterId  The Kubernetes cluster ID
      * @param  string|null  $privateKey  The private key for Git access
+     * @param  int|null  $autoIdle  Whether to enable autoIdle (0 = disabled, 1 = enabled)
      * @return array Response from the API
      *
      * @throws LagoonClientInitializeRequiredToInteractException
@@ -26,7 +27,8 @@ trait ProjectTrait
         string $branches,
         string $productionEnvironment,
         int $clusterId,
-        ?string $privateKey = null): array
+        ?string $privateKey = null,
+        ?int $autoIdle = 0): array
     {
 
         $projectInput = [
@@ -35,6 +37,7 @@ trait ProjectTrait
             'kubernetes' => $clusterId,
             'branches' => $branches,
             'productionEnvironment' => $productionEnvironment,
+            'autoIdle' => $autoIdle ?? 0,
         ] + (! empty($privateKey) ? ['privateKey' => $privateKey] : []);
 
         return $this->addProjectMutation($projectInput);
@@ -51,6 +54,7 @@ trait ProjectTrait
      * @param  string  $privateKey  The private key for Git access
      * @param  int  $orgId  The organization ID
      * @param  bool  $addOrgOwnerToProject  Whether to add organization owner to project
+     * @param  int|null  $autoIdle  Whether to enable autoIdle (0 = disabled, 1 = enabled)
      * @return array Response from the API
      *
      * @throws LagoonClientInitializeRequiredToInteractException
@@ -63,7 +67,8 @@ trait ProjectTrait
         int $clusterId,
         string $privateKey,
         int $orgId,
-        bool $addOrgOwnerToProject): array
+        bool $addOrgOwnerToProject,
+        ?int $autoIdle = 0): array
     {
 
         $projectInput = [
@@ -74,6 +79,7 @@ trait ProjectTrait
             'productionEnvironment' => $productionEnvironment,
             'organization' => $orgId,
             'addOrgOwner' => $addOrgOwnerToProject,
+            'autoIdle' => $autoIdle ?? 0,
         ];
 
         if (! empty($privateKey)) {
