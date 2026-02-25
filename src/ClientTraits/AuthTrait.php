@@ -24,7 +24,13 @@ trait AuthTrait
             echo $ssh->getTokenCommand();
         }
 
-        $token = $ssh->executeLagoonGetToken();
+        try {
+            $token = $ssh->executeLagoonGetToken();
+        } catch (\Exception $e) {
+            error_log('SSH Token fetch exception: '.$e->getMessage());
+            $token = '';
+        }
+
         $this->setLagoonToken($token);
 
         return $token;

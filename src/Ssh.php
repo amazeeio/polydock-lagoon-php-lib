@@ -24,9 +24,19 @@ class Ssh extends SpatieSsh
     {
         $sshCommand = $this->getTokenCommand();
 
+        error_log('Executing SSH command: '.$sshCommand);
+
         $process = $this->run($sshCommand);
 
-        $token = $process->getOutput();
+        $output = $process->getOutput();
+        $error = $process->getErrorOutput();
+        $exitCode = $process->getExitCode();
+
+        error_log('SSH output: '.$output);
+        error_log('SSH error: '.$error);
+        error_log('SSH exit code: '.$exitCode);
+
+        $token = $output;
 
         return ltrim(rtrim($token));
     }

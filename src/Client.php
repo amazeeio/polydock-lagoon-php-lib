@@ -49,16 +49,16 @@ class Client
      * Initializes the client with configuration settings for SSH and API connectivity.
      * Uses default values for most settings if not explicitly provided.
      *
-     * @param array $config Configuration array with optional keys:
-     *                      - ssh_user: SSH username (default:
-     *                      'lagoon') - ssh_server: SSH server
-     *                      hostname (default:
-     *                      'ssh.lagoon.amazeeio.cloud') -
-     *                      ssh_port: SSH port (default: '32222') -
-     *                      endpoint: API endpoint URL (default:
-     *                      'https://api.lagoon.amazeeio.cloud/graphql')
-     *                      - ssh_private_key_file: Path to SSH
-     *                      private key (default: '~/.ssh/id_rsa')
+     * @param  array  $config  Configuration array with optional keys:
+     *                         - ssh_user: SSH username (default:
+     *                         'lagoon') - ssh_server: SSH server
+     *                         hostname (default:
+     *                         'ssh.lagoon.amazeeio.cloud') -
+     *                         ssh_port: SSH port (default: '32222') -
+     *                         endpoint: API endpoint URL (default:
+     *                         'https://api.lagoon.amazeeio.cloud/graphql')
+     *                         - ssh_private_key_file: Path to SSH
+     *                         private key (default: '~/.ssh/id_rsa')
      *
      * @throws LagoonClientPrivateKeyNotFoundException
      */
@@ -84,7 +84,7 @@ class Client
     /**
      * Set the debug mode
      *
-     * @param bool $debug True to enable debug, false to disable
+     * @param  bool  $debug  True to enable debug, false to disable
      */
     public function setDebug(bool $debug): void
     {
@@ -114,9 +114,9 @@ class Client
 
         $this->graphqlClient = ClientBuilder::build(
             $this->lagoonApiEndpoint, [
-            'headers' => [
-                'Authorization' => 'Bearer '.$this->lagoonToken,
-            ],
+                'headers' => [
+                    'Authorization' => 'Bearer '.$this->lagoonToken,
+                ],
             ]
         );
     }
@@ -129,7 +129,7 @@ class Client
     public function getGraphqlClient(): GraphqlClient
     {
         if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
-            throw new LagoonClientTokenRequiredToInitializeException();
+            throw new LagoonClientTokenRequiredToInitializeException;
         }
 
         return $this->graphqlClient;
@@ -138,7 +138,7 @@ class Client
     /**
      * Sets the Lagoon authentication token
      *
-     * @param string $token The authentication token
+     * @param  string  $token  The authentication token
      */
     public function setLagoonToken(string $token): void
     {
