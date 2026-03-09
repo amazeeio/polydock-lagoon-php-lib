@@ -41,9 +41,9 @@ class Client
 
     use AuthTrait;
     use GroupTrait;
+    use OrganizationTrait;
     use ProjectEnvironmentTrait;
     use ProjectTrait;
-    use OrganizationTrait;
 
     /**
      * Constructor for the Lagoon API client

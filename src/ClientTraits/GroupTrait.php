@@ -86,7 +86,7 @@ trait GroupTrait
         }
 
         $mutation = <<<GQL
-            query {
+            mutation {
                 removeUserFromGroup(input:  {
                     group:  {
                         name: "{$groupName}"
