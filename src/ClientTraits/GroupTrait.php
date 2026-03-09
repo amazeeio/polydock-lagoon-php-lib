@@ -75,4 +75,42 @@ trait GroupTrait
         }
 
     }
+    
+    /**
+     * @throws LagoonClientInitializeRequiredToInteractException
+     */
+    public function removeUserFromGroup(string $groupName, string $userEmail): array
+    {
+        if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
+            throw new LagoonClientInitializeRequiredToInteractException;
+        }
+
+        $mutation = <<<GQL
+            mutation {
+                removeUserFromGroup(input:  {
+                    group:  {
+                        name: "{$groupName}"
+                    },
+                    user:  {
+                        email: "{$userEmail}"
+                    }
+                }){
+                    id
+                    name
+                    memberCount
+                }
+            }
+        GQL;
+
+        $response = $this->graphqlClient->query($mutation);
+
+        if ($response->hasErrors()) {
+            return ['error' => $response->getErrors()];
+        } else {
+            // Returns an array with all the data returned by the GraphQL server.
+            return $response->getData();
+        }
+
+    }
+
 }
