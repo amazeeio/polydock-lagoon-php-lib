@@ -113,7 +113,7 @@ trait GroupTrait
 
     }
 
-       /**
+    /**
      * Gets users for a group
      *
      * @param  string  $groupName  The name of the group
