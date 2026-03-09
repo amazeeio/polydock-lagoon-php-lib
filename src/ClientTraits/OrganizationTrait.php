@@ -9,7 +9,7 @@ trait OrganizationTrait {
     /**
      * @throws LagoonClientInitializeRequiredToInteractException
      */
-    public function removeUserFromOrganization(int $orgId, string $userEmail): array
+    public function removeUserFromOrganizationGroups(int $orgId, string $userEmail): array
     {
         if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
             throw new LagoonClientInitializeRequiredToInteractException;
