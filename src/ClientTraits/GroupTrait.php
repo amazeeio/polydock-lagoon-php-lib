@@ -183,6 +183,4 @@ trait GroupTrait
 
         return $emails;
     }
-
-
 }

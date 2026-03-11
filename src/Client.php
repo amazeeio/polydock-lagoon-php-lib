@@ -4,9 +4,9 @@ namespace FreedomtechHosting\FtLagoonPhp;
 
 use FreedomtechHosting\FtLagoonPhp\ClientTraits\AuthTrait;
 use FreedomtechHosting\FtLagoonPhp\ClientTraits\GroupTrait;
+use FreedomtechHosting\FtLagoonPhp\ClientTraits\OrganizationTrait;
 use FreedomtechHosting\FtLagoonPhp\ClientTraits\ProjectEnvironmentTrait;
 use FreedomtechHosting\FtLagoonPhp\ClientTraits\ProjectTrait;
-use FreedomtechHosting\FtLagoonPhp\ClientTraits\OrganizationTrait;
 use Softonic\GraphQL\Client as GraphqlClient;
 use Softonic\GraphQL\ClientBuilder;
 

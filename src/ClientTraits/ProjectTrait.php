@@ -2,6 +2,7 @@
 
 namespace FreedomtechHosting\FtLagoonPhp\ClientTraits;
 
+use FreedomtechHosting\FtLagoonPhp\Enums\LagoonVariableScope;
 use FreedomtechHosting\FtLagoonPhp\LagoonClientInitializeRequiredToInteractException;
 use FreedomtechHosting\FtLagoonPhp\LagoonVariableScopeInvalidException;
 
@@ -280,8 +281,7 @@ trait ProjectTrait
             throw new LagoonClientInitializeRequiredToInteractException;
         }
 
-        $validScopes = ['RUNTIME', 'BUILD', 'CONTAINER_REGISTRY', 'GLOBAL'];
-        if (! in_array($scope, $validScopes)) {
+        if (LagoonVariableScope::tryFrom($scope) === null) {
             throw new LagoonVariableScopeInvalidException;
         }
 
@@ -330,6 +330,75 @@ trait ProjectTrait
         string $value
     ) {
         return $this->addOrUpdateScopedVariableForProject($projectName, $key, $value, 'GLOBAL');
+    }
+
+    /**
+     * Adds or updates a variable with a specific scope for an organization
+     *
+     * @param  string  $organizationName  The organization name
+     * @param  string  $key  The variable key/name
+     * @param  string  $value  The variable value
+     * @param  string  $scope  The scope of the variable (GLOBAL, RUNTIME, BUILD, CONTAINER_REGISTRY)
+     * @return array Response from the API
+     *
+     * @throws LagoonClientInitializeRequiredToInteractException|LagoonVariableScopeInvalidException if client not initialized
+     */
+    public function addOrUpdateScopedVariableForOrganization(
+        string $organizationName,
+        string $key,
+        string $value,
+        string $scope
+    ): array {
+        if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
+            throw new LagoonClientInitializeRequiredToInteractException;
+        }
+
+        if (LagoonVariableScope::tryFrom($scope) === null) {
+            throw new LagoonVariableScopeInvalidException;
+        }
+
+        $mutation = <<<GQL
+            mutation m {
+                addOrUpdateEnvVariableByName(input: {
+                    organization: {$organizationName}
+                    name: "{$key}"
+                    scope: {$scope}
+                    value: "{$value}"
+                }) {
+                    id
+                    name
+                    value
+                    scope
+                }
+            }
+        GQL;
+
+        $response = $this->graphqlClient->query($mutation);
+
+        if ($response->hasErrors()) {
+            return ['error' => $response->getErrors()];
+        } else {
+            // Returns an array with all the data returned by the GraphQL server.
+            return $response->getData();
+        }
+    }
+
+    /**
+     * Adds or updates a global variable for an organization
+     *
+     * @param  string  $organizationName  The organization name
+     * @param  string  $key  The variable key/name
+     * @param  string  $value  The variable value
+     * @return array Response from the API
+     *
+     * @throws LagoonClientInitializeRequiredToInteractException|LagoonVariableScopeInvalidException if client not initialized
+     */
+    public function addOrUpdateGlobalVariableForOrganization(
+        string $organizationName,
+        string $key,
+        string $value
+    ) {
+        return $this->addOrUpdateScopedVariableForOrganization($organizationName, $key, $value, 'GLOBAL');
     }
 
     /**

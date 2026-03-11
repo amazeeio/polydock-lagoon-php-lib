@@ -4,9 +4,8 @@ namespace FreedomtechHosting\FtLagoonPhp\ClientTraits;
 
 use FreedomtechHosting\FtLagoonPhp\LagoonClientInitializeRequiredToInteractException;
 
-trait OrganizationTrait 
+trait OrganizationTrait
 {
-        
     /**
      * @throws LagoonClientInitializeRequiredToInteractException
      */
@@ -39,5 +38,4 @@ trait OrganizationTrait
             return $response->getData();
         }
     }
-
 }
