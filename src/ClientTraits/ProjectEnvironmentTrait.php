@@ -108,6 +108,114 @@ trait ProjectEnvironmentTrait
     }
 
     /**
+     * Triggers a bulk deployment for multiple environments
+     *
+     * @param  array  $environments  Array of environments to deploy. Each can be an environment ID (int) or an array with 'id' or 'project' and 'name'
+     * @param  string|null  $name  Optional name for the bulk deployment
+     * @param  array  $buildVariables  Optional build variables to apply to all deployments in the batch
+     * @return array Response from the API including the bulk deployment ID
+     *
+     * @throws LagoonClientInitializeRequiredToInteractException if client not initialized
+     */
+    public function bulkDeployEnvironments(
+        array $environments,
+        ?string $name = null,
+        array $buildVariables = []
+    ): array {
+        if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
+            throw new LagoonClientInitializeRequiredToInteractException;
+        }
+
+        $bulkName = $name ?? 'Bulk deployment ' . date('Y-m-d H:i:s');
+
+        $envInputs = [];
+        foreach ($environments as $env) {
+            if (is_numeric($env)) {
+                $envInputs[] = "{environment: {id: {$env}}}";
+            } elseif (is_array($env)) {
+                if (isset($env['id'])) {
+                    $envInputs[] = "{environment: {id: {$env['id']}}}";
+                } elseif (isset($env['project']) && isset($env['name'])) {
+                    $envInputs[] = "{environment: {name: \"{$env['name']}\", project: {name: \"{$env['project']}\"}}}";
+                }
+            }
+        }
+
+        $environmentsInput = 'environments: [' . implode(', ', $envInputs) . ']';
+
+        $buildVarsInput = '';
+        if (! empty($buildVariables)) {
+            $formattedVars = [];
+            foreach ($buildVariables as $key => $value) {
+                $formattedVars[] = "{name: \"{$key}\", value: \"{$value}\"}";
+            }
+            $buildVarsInput = 'buildVariables: [' . implode(', ', $formattedVars) . ']';
+        }
+
+        $mutation = <<<GQL
+            mutation m {
+                bulkDeployEnvironmentLatest(input: {
+                    name: "{$bulkName}"
+                    {$environmentsInput}
+                    {$buildVarsInput}
+                })
+            }
+        GQL;
+
+        $response = $this->graphqlClient->query($mutation);
+
+        if ($response->hasErrors()) {
+            return ['error' => $response->getErrors()];
+        } else {
+            $data = $response->getData();
+            return $data;
+        }
+    }
+
+    /**
+     * Gets deployments for a specific bulk ID
+     *
+     * @param  string  $bulkId  The bulk deployment ID
+     * @return array Deployment information or error details
+     *
+     * @throws LagoonClientInitializeRequiredToInteractException if client not initialized
+     */
+    public function getDeploymentsByBulkId(string $bulkId): array
+    {
+        if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
+            throw new LagoonClientInitializeRequiredToInteractException;
+        }
+
+        $query = <<<GQL
+            query q {
+                deploymentsByBulkId(bulkId: "{$bulkId}") {
+                    id
+                    name
+                    status
+                    created
+                    started
+                    completed
+                    environment {
+                        name
+                        project {
+                            name
+                        }
+                    }
+                }
+            }
+        GQL;
+
+        $response = $this->graphqlClient->query($query);
+
+        if ($response->hasErrors()) {
+            return ['error' => $response->getErrors()];
+        } else {
+            $data = $response->getData();
+            return $data['deploymentsByBulkId'] ?? [];
+        }
+    }
+
+    /**
      * Gets deployment information for a specific deployment
      *
      * @param  string  $projectId  The project ID

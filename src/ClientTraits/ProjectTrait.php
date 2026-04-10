@@ -163,9 +163,9 @@ trait ProjectTrait
         /**
          * Query Example
          */
-        $query = <<<GQL
-            query q {
-                projectByName(name: "{$projectName}") {
+        $query = <<<'GQL'
+            query q($name: String!) {
+                projectByName(name: $name) {
                     id
                     name
                     productionEnvironment
@@ -208,12 +208,54 @@ trait ProjectTrait
             }
         GQL;
 
-        $response = $this->graphqlClient->query($query);
+        $response = $this->graphqlClient->query($query, ['name' => $projectName]);
 
         if ($response->hasErrors()) {
             return ['error' => $response->getErrors()];
         } else {
             // Returns an array with all the data returned by the GraphQL server.
+            return $response->getData();
+        }
+    }
+
+    /**
+     * Updates project metadata for a Lagoon project
+     *
+     * @param  string  $projectName  The name of the project
+     * @param  string  $key  The metadata key
+     * @param  string  $value  The metadata value
+     * @return array Response from the API
+     *
+     * @throws LagoonClientInitializeRequiredToInteractException if client not initialized
+     */
+    public function updateProjectMetadata(string $projectName, string $key, string $value): array
+    {
+        if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
+            throw new LagoonClientInitializeRequiredToInteractException;
+        }
+
+        $mutation = <<<'GQL'
+            mutation m($input: UpdateProjectMetadataInput!) {
+                updateProjectMetadata(input: $input) {
+                    id
+                    metadata
+                }
+            }
+        GQL;
+
+        $input = [
+            'project' => $projectName,
+            'patch' => [
+                'key' => $key,
+                'value' => $value,
+            ],
+        ];
+
+        $response = $this->graphqlClient->query($mutation, ['input' => $input]);
+
+        if ($response->hasErrors()) {
+            return ['error' => $response->getErrors()];
+        } else {
             return $response->getData();
         }
     }
@@ -285,17 +327,9 @@ trait ProjectTrait
             throw new LagoonVariableScopeInvalidException;
         }
 
-        $environmentArg = ! empty($environment) ? "environment: \"{$environment}\"," : '';
-
-        $mutation = <<<GQL
-            mutation m {
-                addOrUpdateEnvVariableByName(input: {
-                    project: "{$projectName}"
-                    name: "{$key}"
-                    scope: {$scope}
-                    value: "{$value}"
-                    {$environmentArg}
-                }) {
+        $mutation = <<<'GQL'
+            mutation m($input: AddOrUpdateEnvVariableByNameInput!) {
+                addOrUpdateEnvVariableByName(input: $input) {
                     id
                     name
                     value
@@ -304,7 +338,18 @@ trait ProjectTrait
             }
         GQL;
 
-        $response = $this->graphqlClient->query($mutation);
+        $input = [
+            'project' => $projectName,
+            'name' => $key,
+            'scope' => $scope,
+            'value' => $value,
+        ];
+
+        if (! empty($environment)) {
+            $input['environment'] = $environment;
+        }
+
+        $response = $this->graphqlClient->query($mutation, ['input' => $input]);
 
         if ($response->hasErrors()) {
             return ['error' => $response->getErrors()];
@@ -357,14 +402,9 @@ trait ProjectTrait
             throw new LagoonVariableScopeInvalidException;
         }
 
-        $mutation = <<<GQL
-            mutation m {
-                addOrUpdateEnvVariableByName(input: {
-                    organization: {$organizationName}
-                    name: "{$key}"
-                    scope: {$scope}
-                    value: "{$value}"
-                }) {
+        $mutation = <<<'GQL'
+            mutation m($input: AddOrUpdateEnvVariableByNameInput!) {
+                addOrUpdateEnvVariableByName(input: $input) {
                     id
                     name
                     value
@@ -373,7 +413,14 @@ trait ProjectTrait
             }
         GQL;
 
-        $response = $this->graphqlClient->query($mutation);
+        $input = [
+            'organization' => (int) $organizationName, // Lagoon expects Int for organization in this mutation if using ID, or String for name?
+            'name' => $key,
+            'scope' => $scope,
+            'value' => $value,
+        ];
+
+        $response = $this->graphqlClient->query($mutation, ['input' => $input]);
 
         if ($response->hasErrors()) {
             return ['error' => $response->getErrors()];
@@ -472,19 +519,22 @@ trait ProjectTrait
             throw new LagoonClientInitializeRequiredToInteractException;
         }
 
-        $environmentArg = ! empty($environment) ? "environment: \"{$environment}\"," : '';
-
-        $mutation = <<<GQL
-            mutation m {
-                deleteEnvVariableByName(input: {
-                    project: "{$projectName}",
-                    name: "{$variableName}"
-                    {$environmentArg}
-                })
+        $mutation = <<<'GQL'
+            mutation m($input: DeleteEnvVariableByNameInput!) {
+                deleteEnvVariableByName(input: $input)
             }
         GQL;
 
-        $response = $this->graphqlClient->query($mutation);
+        $input = [
+            'project' => $projectName,
+            'name' => $variableName,
+        ];
+
+        if (! empty($environment)) {
+            $input['environment'] = $environment;
+        }
+
+        $response = $this->graphqlClient->query($mutation, ['input' => $input]);
 
         if ($response->hasErrors()) {
             return ['error' => $response->getErrors()];
@@ -509,15 +559,17 @@ trait ProjectTrait
             throw new LagoonClientInitializeRequiredToInteractException;
         }
 
-        $mutation = <<<GQL
-            mutation m {
-                deleteProject(input: {
-                    project: "{$projectName}",
-                })
+        $mutation = <<<'GQL'
+            mutation m($input: DeleteProjectInput!) {
+                deleteProject(input: $input)
             }
         GQL;
 
-        $response = $this->graphqlClient->query($mutation);
+        $input = [
+            'project' => $projectName,
+        ];
+
+        $response = $this->graphqlClient->query($mutation, ['input' => $input]);
 
         if ($response->hasErrors()) {
             return ['error' => $response->getErrors()];
@@ -542,32 +594,18 @@ trait ProjectTrait
             throw new \Exception('At least one of branches or pullrequests must be provided');
         }
 
-        $config = '';
-        if (! empty($branches)) {
-            $config .= "branches: \"{$branches}\"\n";
-        }
-
-        if (! empty($pullrequests)) {
-            $config .= "pullrequests: \"{$pullrequests}\"\n";
-        }
-
-        $mutation = <<<GQL
-            mutation {
-                addDeployTargetConfig(input:{
-                    project: {$projectId}
-                    {$config}
-                    deployTarget: {$deployTargetId}
-                    weight: {$weight}
-                }){
+        $mutation = <<<'GQL'
+            mutation ($input: AddDeployTargetConfigInput!) {
+                addDeployTargetConfig(input: $input) {
                     id
                     branches
                     pullrequests
                     weight
-                    project{
+                    project {
                         id
                         name
                     }
-                    deployTarget{
+                    deployTarget {
                         id
                         name
                         friendlyName
@@ -578,7 +616,21 @@ trait ProjectTrait
             }
         GQL;
 
-        $response = $this->graphqlClient->query($mutation);
+        $input = [
+            'project' => $projectId,
+            'deployTarget' => $deployTargetId,
+            'weight' => $weight,
+        ];
+
+        if (! empty($branches)) {
+            $input['branches'] = $branches;
+        }
+
+        if (! empty($pullrequests)) {
+            $input['pullrequests'] = $pullrequests;
+        }
+
+        $response = $this->graphqlClient->query($mutation, ['input' => $input]);
 
         if ($response->hasErrors()) {
             return ['error' => $response->getErrors()];
@@ -596,9 +648,9 @@ trait ProjectTrait
             throw new LagoonClientInitializeRequiredToInteractException;
         }
 
-        $query = <<<GQL
-            query {
-                deployTargetConfigsByProjectId(project: {$projectId}) {
+        $query = <<<'GQL'
+            query ($project: Int!) {
+                deployTargetConfigsByProjectId(project: $project) {
                     id
                     branches
                     pullrequests
@@ -618,7 +670,7 @@ trait ProjectTrait
             }
         GQL;
 
-        $response = $this->graphqlClient->query($query);
+        $response = $this->graphqlClient->query($query, ['project' => $projectId]);
 
         if ($response->hasErrors()) {
             return ['error' => $response->getErrors()];
@@ -636,9 +688,9 @@ trait ProjectTrait
             throw new LagoonClientInitializeRequiredToInteractException;
         }
 
-        $query = <<<GQL
-            query {
-                deployTargetConfigById(id: {$deployTargetConfigId}) {
+        $query = <<<'GQL'
+            query ($id: Int!) {
+                deployTargetConfigById(id: $id) {
                     id
                     branches
                     pullrequests
@@ -658,7 +710,7 @@ trait ProjectTrait
             }
         GQL;
 
-        $response = $this->graphqlClient->query($query);
+        $response = $this->graphqlClient->query($query, ['id' => $deployTargetConfigId]);
 
         if ($response->hasErrors()) {
             return ['error' => $response->getErrors()];
@@ -682,49 +734,50 @@ trait ProjectTrait
             throw new \Exception('At least one of branches or pullRequest must be provided');
         }
 
-        $config = "patch: {\n";
-        $config .= "deployTarget: {$deployTargetId}\n";
-
-        if (! empty($branches)) {
-            $config .= "branches: \"{$branches}\"\n";
-        }
-
-        if (! empty($pullRequest)) {
-            $config .= "pullrequests: \"{$pullRequest}\"\n";
-        }
-
-        if (! is_null($weight)) {
-            $config .= "weight: {$weight}\n";
-        }
-
-        $config .= "}\n";
-
-        $mutation = <<<GQL
-            mutation {
-                updateDeployTargetConfig(input:{
-                    id: {$deployTargetConfigId}
-                    {$config}
-                }){
+        $mutation = <<<'GQL'
+            mutation ($input: UpdateDeployTargetConfigInput!) {
+                updateDeployTargetConfig(input: $input) {
                     id
                     weight
                     branches
                     pullrequests
                     deployTargetProjectPattern
-                    deployTarget{
+                    deployTarget {
                         id
                         name
                         friendlyName
                         cloudRegion
                         cloudProvider
                     }
-                    project{
+                    project {
                         name
                     }
                 }
             }
         GQL;
 
-        $response = $this->graphqlClient->query($mutation);
+        $patch = [
+            'deployTarget' => $deployTargetId,
+        ];
+
+        if (! empty($branches)) {
+            $patch['branches'] = $branches;
+        }
+
+        if (! empty($pullRequest)) {
+            $patch['pullrequests'] = $pullRequest;
+        }
+
+        if (! is_null($weight)) {
+            $patch['weight'] = $weight;
+        }
+
+        $input = [
+            'id' => $deployTargetConfigId,
+            'patch' => $patch,
+        ];
+
+        $response = $this->graphqlClient->query($mutation, ['input' => $input]);
 
         if ($response->hasErrors()) {
             return ['error' => $response->getErrors()];
@@ -742,17 +795,19 @@ trait ProjectTrait
             throw new LagoonClientInitializeRequiredToInteractException;
         }
 
-        $mutation = <<<GQL
-            mutation {
-                deleteDeployTargetConfig(input:{
-                    id: {$deployTargetConfigId}
-                    project: {$projectId}
-                    execute: true
-                })
+        $mutation = <<<'GQL'
+            mutation ($input: DeleteDeployTargetConfigInput!) {
+                deleteDeployTargetConfig(input: $input)
             }
         GQL;
 
-        $response = $this->graphqlClient->query($mutation);
+        $input = [
+            'id' => $deployTargetConfigId,
+            'project' => $projectId,
+            'execute' => true,
+        ];
+
+        $response = $this->graphqlClient->query($mutation, ['input' => $input]);
 
         if ($response->hasErrors()) {
             return ['error' => $response->getErrors()];
