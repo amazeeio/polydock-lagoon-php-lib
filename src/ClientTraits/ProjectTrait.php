@@ -328,7 +328,7 @@ trait ProjectTrait
         }
 
         $mutation = <<<'GQL'
-            mutation m($input: AddOrUpdateEnvVariableByNameInput!) {
+            mutation m($input: EnvVariableByNameInput!) {
                 addOrUpdateEnvVariableByName(input: $input) {
                     id
                     name
@@ -403,7 +403,7 @@ trait ProjectTrait
         }
 
         $mutation = <<<'GQL'
-            mutation m($input: AddOrUpdateEnvVariableByNameInput!) {
+            mutation m($input: EnvVariableByNameInput!) {
                 addOrUpdateEnvVariableByName(input: $input) {
                     id
                     name
