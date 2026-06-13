@@ -114,12 +114,27 @@ class Client
             throw new LagoonClientTokenRequiredToInitializeException;
         }
 
+        $options = [
+            'headers' => [
+                'Authorization' => 'Bearer '.$this->lagoonToken,
+            ],
+        ];
+
+        if (isset($this->config['connect_timeout'])) {
+            $options['connect_timeout'] = (float) $this->config['connect_timeout'];
+        } else {
+            $options['connect_timeout'] = 5.0; // Default to 5 seconds
+        }
+
+        if (isset($this->config['timeout'])) {
+            $options['timeout'] = (float) $this->config['timeout'];
+        } else {
+            $options['timeout'] = 10.0; // Default to 10 seconds
+        }
+
         $this->graphqlClient = ClientBuilder::build(
-            $this->lagoonApiEndpoint, [
-                'headers' => [
-                    'Authorization' => 'Bearer '.$this->lagoonToken,
-                ],
-            ]
+            $this->lagoonApiEndpoint,
+            $options
         );
     }
 
