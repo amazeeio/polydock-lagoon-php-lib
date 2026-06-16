@@ -261,6 +261,46 @@ trait ProjectTrait
     }
 
     /**
+     * Adds or updates project metadata for a Lagoon project by key
+     *
+     * @param  string  $projectName  The name of the project
+     * @param  string  $key  The metadata key
+     * @param  string  $value  The metadata value
+     * @return array Response from the API
+     *
+     * @throws LagoonClientInitializeRequiredToInteractException if client not initialized
+     */
+    public function addOrUpdateProjectMetadataByKey(string $projectName, string $key, string $value): array
+    {
+        if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
+            throw new LagoonClientInitializeRequiredToInteractException;
+        }
+
+        $mutation = <<<'GQL'
+            mutation m($input: AddOrUpdateProjectMetadataByKeyInput!) {
+                addOrUpdateProjectMetadataByKey(input: $input) {
+                    id
+                    metadata
+                }
+            }
+        GQL;
+
+        $input = [
+            'project' => $projectName,
+            'key' => $key,
+            'value' => $value,
+        ];
+
+        $response = $this->graphqlClient->query($mutation, ['input' => $input]);
+
+        if ($response->hasErrors()) {
+            return ['error' => $response->getErrors()];
+        } else {
+            return $response->getData();
+        }
+    }
+
+    /**
      * Gets all variables for a project
      *
      * @param  string  $projectName  The name of the project
