@@ -221,77 +221,48 @@ trait ProjectTrait
     /**
      * Updates project metadata for a Lagoon project
      *
-     * @param  string  $projectName  The name of the project
+     * @param  int|string  $projectIdOrName  The ID or name of the project
      * @param  string  $key  The metadata key
      * @param  string  $value  The metadata value
      * @return array Response from the API
      *
      * @throws LagoonClientInitializeRequiredToInteractException if client not initialized
      */
-    public function updateProjectMetadata(string $projectName, string $key, string $value): array
+    public function updateProjectMetadata(int|string $projectIdOrName, string $key, string $value): array
     {
         if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
             throw new LagoonClientInitializeRequiredToInteractException;
         }
 
-        $mutation = <<<'GQL'
-            mutation m($input: UpdateProjectMetadataInput!) {
-                updateProjectMetadata(input: $input) {
-                    id
-                    metadata
-                }
+        $projectId = $projectIdOrName;
+
+        // If a non-numeric string is passed, treat it as a project name and look up the ID.
+        if (!is_numeric($projectIdOrName)) {
+            $projectData = $this->getProjectByName($projectIdOrName);
+            if (empty($projectData['projectByName']['id'])) {
+                return ['error' => sprintf('Project "%s" not found.', $projectIdOrName)];
             }
-        GQL;
-
-        $input = [
-            'project' => $projectName,
-            'patch' => [
-                'key' => $key,
-                'value' => $value,
-            ],
-        ];
-
-        $response = $this->graphqlClient->query($mutation, ['input' => $input]);
-
-        if ($response->hasErrors()) {
-            return ['error' => $response->getErrors()];
+            $projectId = (int) $projectData['projectByName']['id'];
         } else {
-            return $response->getData();
-        }
-    }
-
-    /**
-     * Adds or updates project metadata for a Lagoon project by key
-     *
-     * @param  string  $projectName  The name of the project
-     * @param  string  $key  The metadata key
-     * @param  string  $value  The metadata value
-     * @return array Response from the API
-     *
-     * @throws LagoonClientInitializeRequiredToInteractException if client not initialized
-     */
-    public function addOrUpdateProjectMetadataByKey(string $projectName, string $key, string $value): array
-    {
-        if (empty($this->lagoonToken) || empty($this->graphqlClient)) {
-            throw new LagoonClientInitializeRequiredToInteractException;
+            $projectId = (int) $projectIdOrName;
         }
 
-        $mutation = <<<'GQL'
-            mutation m($input: AddOrUpdateProjectMetadataByKeyInput!) {
-                addOrUpdateProjectMetadataByKey(input: $input) {
+        // Inline parameters exactly like the working GQL example to avoid dependency on GraphQL schema types
+        $escapedKey = json_encode($key);
+        $escapedValue = json_encode($value);
+
+        $mutation = "
+            mutation {
+                updateProjectMetadata(
+                    input: { id: {$projectId}, patch: { key: {$escapedKey}, value: {$escapedValue} } }
+                ) {
                     id
                     metadata
                 }
             }
-        GQL;
+        ";
 
-        $input = [
-            'project' => $projectName,
-            'key' => $key,
-            'value' => $value,
-        ];
-
-        $response = $this->graphqlClient->query($mutation, ['input' => $input]);
+        $response = $this->graphqlClient->query($mutation);
 
         if ($response->hasErrors()) {
             return ['error' => $response->getErrors()];
