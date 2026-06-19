@@ -570,17 +570,15 @@ trait ProjectTrait
             throw new LagoonClientInitializeRequiredToInteractException;
         }
 
-        $mutation = <<<'GQL'
-            mutation m($input: DeleteProjectInput!) {
-                deleteProject(input: $input)
+        $mutation = <<<GQL
+            mutation d {
+                deleteProject(input: {
+                    project: "{$projectName}"
+                })
             }
         GQL;
 
-        $input = [
-            'project' => $projectName,
-        ];
-
-        $response = $this->graphqlClient->query($mutation, ['input' => $input]);
+        $response = $this->graphqlClient->query($mutation);
 
         if ($response->hasErrors()) {
             return ['error' => $response->getErrors()];
