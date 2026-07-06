@@ -1,3 +1,5 @@
+> **NOTE: Deprecated** — see the [polydock-engine](https://github.com/amazeeio/polydock-engine) repo.
+
 # FT Lagoon PHP Client
 
 > **⚠️ Warning: Experimental Project**  
